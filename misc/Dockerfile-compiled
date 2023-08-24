@@ -24,7 +24,7 @@ RUN go build -o main main.go
 FROM public.ecr.aws/lambda/provided:al2
 
 # Copy our static executable.
-COPY --from=builder /workspace/main /lambdaloader
+COPY --from=builder /workspace/main /main
 
 # Run it
 ENTRYPOINT ["lambdaloader"]

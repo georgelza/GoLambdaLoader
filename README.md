@@ -1,6 +1,9 @@
 #
 # https://github.com/confluentinc/confluent-kafka-go/blob/master/examples/docker_aws_lambda_example/README.md
 #
+# https://gallery.ecr.aws/lambda/provided
+#
+# https://forum.confluent.io/t/client-in-docker-deployed-on-aws-lambda/8222/2
 
 # Build Docker image
     $ docker build -f examples/docker_aws_lambda_example/Dockerfile -t goclients .
@@ -27,3 +30,28 @@
 # docker tag golambdaloader:latest 383982001916.dkr.ecr.af-south-1.amazonaws.com/golambdaloader:latest
 
 # docker push 383982001916.dkr.ecr.af-south-1.amazonaws.com/golambdaloader:latest
+
+# Manual Execute
+# aws lambda invoke --function-name S3JSONDecomposer-Golang-dck response.json
+
+
+aws lambda create-function \
+  --function-name S3JSONDecomposer-Golang-dck \
+  --package-type Image \
+  --code ImageUri=383982001916.dkr.ecr.af-south-1.amazonaws.com/golambdaloader:0.0.1 \
+  --role arn:aws:iam::383982001916:role/service-role/S3JSONDecomposer-Golang-dck-role-jcc7ipyk
+
+
+
+# docker build --platform linux/amd64 -t jsondecomp-go:test .
+
+# sudo su
+# systemctl start docker
+# systemctl enable docker
+# systemctl restart docker
+
+# newgrp docker
+
+# https://github.com/aws/aws-lambda-base-images
+# https://docs.docker.com/build/building/multi-platform/
+# https://docs.aws.amazon.com/lambda/latest/dg/go-image.html#go-image-v1
