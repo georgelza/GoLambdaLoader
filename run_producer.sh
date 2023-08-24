@@ -14,11 +14,11 @@ export kafka_sasl_mechanisms=PLAIN
 #export kafka_sasl_username= -> see .pws
 #export kafka_sasl_password= -> see .pws
 
-export flushcap=1000
+export flushcap=2000
 #export reccap=2000000
-export reccap=8000
+export reccap=16000
 
-export echokafkapost=0
+export echokafkapost=1
 export AWS_REGION=af-south-1
 
 go run -v main.go

@@ -17,15 +17,6 @@
 *
 *	jsonformatter 	: https://jsonformatter.curiousconcept.com/#
 *
-*	aws iam create-role --role-name lambda-ex --assume-role-policy-document file://trust-policy.json
-*
-*	aws iam attach-role-policy --role-name lambda-ex --policy-arn arn:aws:iam::aws:policy/service-role/AWSLamdaBasicExecutionRole
-*
-*	https://www.youtube.com/watch?v=Czny2I2uGJA
-*
-*	aws lambda create-function --function-name golambda2 --zip-file fileb://function.zip --handler main --routine go1.x --role arn:aws:iam::419...:role/lambda-ex
-*
-*	aws lambda invoke --function-name go-lambda2 --cli-binary-format raw-in-base64-out --payload '{"whats is your name":"Jim", "How old are you":33}' output.txt
 *****************************************************************************/
 package main
 
@@ -35,7 +26,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
 	"strconv"
@@ -46,14 +36,47 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/aws/aws-lambda-go/lambda"
+
 	kafka "github.com/confluentinc/confluent-kafka-go/kafka"
 	slog "golang.org/x/exp/slog"
 )
 
+type Tp_kafka struct {
+	Broker            string
+	Port              string
+	Sasl_username     string
+	Sasl_password     string
+	Security_protocol string
+	Sasl_mechanisms   string
+	Client            string
+	Topicname         string
+}
+
 var (
-	logger *slog.Logger
-	//producer kafka.Producer
+	logger   *slog.Logger
+	producer kafka.Producer
+	vKafka   Tp_kafka
 )
+
+func loadKafka() (vkafka Tp_kafka) {
+
+	slog.Info(" Starting loadKafka")
+	slog.Info("")
+
+	vkafka = Tp_kafka{}
+
+	vkafka.Broker = os.Getenv("kafka_bootstrap_servers")
+	vkafka.Port = os.Getenv("kafka_bootstrap_port")
+	vkafka.Sasl_username = os.Getenv("kafka_sasl_username")
+	vkafka.Sasl_password = os.Getenv("kafka_sasl_password")
+	vkafka.Security_protocol = os.Getenv("kafka_security_protocol")
+	vkafka.Sasl_mechanisms = os.Getenv("kafka_sasl_mechanisms")
+	vkafka.Topicname = os.Getenv("kafka_topic_name")
+
+	return vkafka
+
+}
 
 // Pretty Print JSON string
 func prettyJSON(ms string) {
@@ -67,6 +90,7 @@ func prettyJSON(ms string) {
 
 	// Marshall the Colorized JSON
 	result, _ := f.Marshal(obj)
+
 	fmt.Println(string(result))
 
 }
@@ -123,19 +147,19 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 		return err
 	}
 
-	echokafkapostStr := os.Getenv("echokafkapost")
-	echokafkapost, err := strconv.Atoi(echokafkapostStr)
+	//echokafkapostStr := os.Getenv("echokafkapost")
+	/*echokafkapost, err := strconv.Atoi(echokafkapostStr)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error converting echokafkapost environment variable: %s", err))
 		return err
-	}
+	}*/
 
-	KafkaTopic := os.Getenv("kafka_topic_name")
-	logger.Debug(fmt.Sprintf("* Bootstrap_servers       : %s", os.Getenv("kafka_bootstrap_servers")))
-	logger.Debug(fmt.Sprintf("* Bootstrap_port          : %s", os.Getenv("kafka_bootstrap_port")))
-	logger.Debug(fmt.Sprintf("* Topicname               : %s", KafkaTopic))
-	logger.Debug(fmt.Sprintf("* Security_protocol       : %s", os.Getenv("kafka_security_protocol")))
-	logger.Debug(fmt.Sprintf("* Sasl_mechanisms         : %s", os.Getenv("kafka_sasl_mechanisms")))
+	vKafka = loadKafka()
+	logger.Debug(fmt.Sprintf("* Bootstrap_servers       : %s", vKafka.Broker))
+	logger.Debug(fmt.Sprintf("* Bootstrap_port          : %s", vKafka.Port))
+	logger.Debug(fmt.Sprintf("* Topicname               : %s", vKafka.Topicname))
+	logger.Debug(fmt.Sprintf("* Security_protocol       : %s", vKafka.Security_protocol))
+	logger.Debug(fmt.Sprintf("* Sasl_mechanisms         : %s", vKafka.Sasl_mechanisms))
 	logger.Debug(fmt.Sprintf("* flushcap                : %s", os.Getenv("flushcap")))
 	logger.Debug(fmt.Sprintf("* reccap                  : %s", os.Getenv("reccap")))
 	logger.Debug(fmt.Sprintf("* echokafkapost           : %s", os.Getenv("echokafkapost")))
@@ -145,14 +169,14 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 	logger.Debug(fmt.Sprintf("* json_file               : %s", json_file))
 
 	cm := kafka.ConfigMap{
-		"bootstrap.servers":       os.Getenv("kafka_bootstrap_servers"),
+		"bootstrap.servers":       vKafka.Broker,
 		"broker.version.fallback": "0.10.0.0",
 		"api.version.fallback.ms": 0,
 		"client.id":               os.Getenv("George"),
-		"sasl.mechanisms":         os.Getenv("kafka_sasl_mechanisms"),
-		"security.protocol":       os.Getenv("kafka_security_protocol"),
-		"sasl.username":           os.Getenv("kafka_sasl_username"),
-		"sasl.password":           os.Getenv("kafka_sasl_password"),
+		"sasl.mechanisms":         vKafka.Sasl_mechanisms,
+		"security.protocol":       vKafka.Security_protocol,
+		"sasl.username":           vKafka.Sasl_username,
+		"sasl.password":           vKafka.Sasl_password,
 	}
 
 	// Create Kafka producer
@@ -216,7 +240,8 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 		n, err := gr.Read(buf)
 		if err != nil {
 			if err == io.EOF {
-				logger.Info("EOF Reached - Load Complete")
+				logger.Info("EOF Reached")
+
 				break
 
 			}
@@ -246,7 +271,7 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 				}
 
 				message := &kafka.Message{
-					TopicPartition: kafka.TopicPartition{Topic: &KafkaTopic, Partition: kafka.PartitionAny},
+					TopicPartition: kafka.TopicPartition{Topic: &vKafka.Topicname, Partition: kafka.PartitionAny},
 					Value:          jsonData,
 				}
 				//prettyJSON(string(jsonData))
@@ -269,7 +294,7 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 				// Flush messages if counter reaches flushCap
 				if flushCounter >= flushCap {
 					flushRecRem = producer.Flush(100)
-					logger.Info(fmt.Sprintf("Flushing @ :%v remaining %v", recCounter, flushRecRem))
+					logger.Info(fmt.Sprintf("Flushing @ :%v, remaning %v", recCounter, flushRecRem))
 					flushCounter = 0
 				}
 			} else {
@@ -299,16 +324,7 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 								string(*km.TopicPartition.Topic),
 								km.TopicPartition.Error))
 
-						} else {
-							if echokafkapost == 1 {
-								logger.Info(fmt.Sprintf("✅ Message delivered to topic '%v'(partition %d at offset %d)",
-									string(*km.TopicPartition.Topic),
-									km.TopicPartition.Partition,
-									km.TopicPartition.Offset))
-							}
-
 						}
-
 					case kafka.Error:
 						// It's an error
 						em := ev.(kafka.Error)
@@ -328,10 +344,11 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 	end0time := time.Now()
 	diff2time := start2Time.Sub(end0time)
 	diff0time := start0Time.Sub(end0time)
+	logger.Info("Reader Loop Complete:")
 	logger.Info("Main Loop Complete:")
 
 	flushRecRem = producer.Flush(2000)
-	logger.Info(fmt.Sprintf("Final Flush @ :%v remaining %v", recCounter, flushRecRem))
+	logger.Info(fmt.Sprintf("Final Flush @ :%v, remaining %v", recCounter, flushRecRem))
 
 	diff1val := int(math.Abs(math.Round(diff2time.Seconds())))
 
@@ -344,31 +361,31 @@ func handler(ctx context.Context, s3Event events.S3Event) error {
 }
 
 func main() {
-
-	s3Event := events.S3Event{
-		Records: []events.S3EventRecord{
-			{
-				EventName: "ObjectCreated:Put",
-				S3: events.S3Entity{
-					Bucket: events.S3Bucket{
-						Name: "applab-epay-sandbox-filedrop",
-					},
-					Object: events.S3Object{
-						Key: "Kafka-connect/AsyncOut/year=2023/month=06/day=20/hour=16/largecomplexline.json.gz",
-					},
-				},
-			},
-		},
-	}
-
-	// Call the Lambda handler with the dummy event
-	err := handler(context.Background(), s3Event)
-
-	if err != nil {
-		log.Println("Lambda handler error:", err)
-	}
+	lambda.Start(handler)
 }
 
-//func main() {
-//	lambda.Start(handler)
-//}
+// func main() {
+
+// 	s3Event := events.S3Event{
+// 		Records: []events.S3EventRecord{
+// 			{
+// 				EventName: "ObjectCreated:Put",
+// 				S3: events.S3Entity{
+// 					Bucket: events.S3Bucket{
+// 						Name: "applab-epay-sandbox-filedrop",
+// 					},
+// 					Object: events.S3Object{
+// 						Key: "Kafka-connect/AsyncOut/year=2023/month=06/day=20/hour=16/largecomplexline.json.gz",
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	// Call the Lambda handler with the dummy event
+// 	err := handler(context.Background(), s3Event)
+
+// 	if err != nil {
+// 		log.Println("Lambda handler error:", err)
+// 	}
+// }

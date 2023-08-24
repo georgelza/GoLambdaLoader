@@ -1,0 +1,6 @@
+
+scp -i "/Users/george/Downloads/dev/devlab_aws/iamzanet.pem" main.go ec2-user@13.244.99.78:/home/ec2-user/godck
+scp -i "/Users/george/Downloads/dev/devlab_aws/iamzanet.pem" go.mod ec2-user@13.244.99.78:/home/ec2-user/godck
+scp -i "/Users/george/Downloads/dev/devlab_aws/iamzanet.pem" go.sum ec2-user@13.244.99.78:/home/ec2-user/godck
+scp -i "/Users/george/Downloads/dev/devlab_aws/iamzanet.pem" Dockerfile ec2-user@13.244.99.78:/home/ec2-user/godck
+scp -i "/Users/george/Downloads/dev/devlab_aws/iamzanet.pem" Makefile ec2-user@13.244.99.78:/home/ec2-user/godck
