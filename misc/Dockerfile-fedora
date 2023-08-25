@@ -19,9 +19,9 @@ ENV PATH="${GOROOT}/bin:${PATH}"
 WORKDIR /kafka
 COPY go.mod .
 COPY go.sum .
-COPY main.go .
+COPY producer_example.go .
 
 #RUN go build -o producer_example .
-RUN go build -trimpath -ldflags="-s -w" -o main main.go
+RUN go build -trimpath -ldflags="-s -w" -o producer_example producer_example.go
 
-ENTRYPOINT ["./main"]
+ENTRYPOINT ["./producer_example"]
