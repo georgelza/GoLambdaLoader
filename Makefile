@@ -2,7 +2,7 @@ BINARY_NAME=main
 
 export GOOS=linux
 export GOARCH=amd64
-export CGO_ENABLED=1
+export CGO_ENABLED=0
 export AWS_REGION=af-south-1
 export FuncName=S3JSONDecomposer-Golang-dck
 export ImageUri=383982001916.dkr.ecr.af-south-1.amazonaws.com/golambdaloader:0.0.1
