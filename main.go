@@ -55,7 +55,7 @@ type Tp_kafka struct {
 
 var (
 	logger   *slog.Logger
-	producer kafka.Producer
+	producer *kafka.Producer
 	vKafka   Tp_kafka
 )
 

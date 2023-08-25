@@ -7,6 +7,7 @@ COPY go.sum .
 COPY main.go .
 RUN go mod tidy
 
+#ENV CGO_ENABLED=0
 RUN go build -trimpath -ldflags="-s -w" -o main main.go
 
 ############################
