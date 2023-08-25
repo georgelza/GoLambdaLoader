@@ -16,6 +16,7 @@ RUN go mod tidy
 #RUN go build -tags lambda.norpc -o main main.go
 #RUN go build -o main main.go
 #RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/main
+ENV CGO_ENABLED=0
 RUN go build -o main main.go
 
 ############################

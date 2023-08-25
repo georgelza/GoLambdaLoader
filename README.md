@@ -1,9 +1,11 @@
 #
 # https://github.com/confluentinc/confluent-kafka-go/blob/master/examples/docker_aws_lambda_example/README.md
-#
+# https://gallery.ecr.aws/lambda/provided
+# https://forum.confluent.io/t/client-in-docker-deployed-on-aws-lambda/8222/2
+# https://docs.aws.amazon.com/lambda/latest/dg/go-image.html
 # https://gallery.ecr.aws/lambda/provided
 #
-# https://forum.confluent.io/t/client-in-docker-deployed-on-aws-lambda/8222/2
+
 
 # Build Docker image
     $ docker build -f examples/docker_aws_lambda_example/Dockerfile -t goclients .
