@@ -2,7 +2,7 @@
 BINARY_NAME=main
 
 export CGO_ENABLED=0
-export NAME=golambdaloader:0.0.1
+export NAME=golambdaloader:0.0.3
 export REPO=383982001916.dkr.ecr.af-south-1.amazonaws.com
 export ImageUri=${REPO}/${NAME}
 
